@@ -1,0 +1,80 @@
+name: kotsadm-build
+
+on:
+  push:
+    branches:
+      - "**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: test
+      run: |
+        pwd
+        ls -l
+
+
+  generate-schema:
+    runs-on: ubuntu-18.04
+    container:
+      image: schemahero/schemahero:0.7.2
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Generate fixtures
+        run: |
+          /schemahero fixtures \
+            --input-dir ./kotsadm/migrations/tables \
+            --output-dir ./kotsadm/migrations/fixtures/schema \
+            --dbname ship-cloud --driver postgres
+
+      - name: Upload fixtures artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: fixtures
+          path: ./kotsadm/migrations/fixtures/schema/fixtures.sql
+
+
+  generate-fixtures:
+    runs-on: ubuntu-18.04
+    needs: [generate-schema]
+    container:
+      image: replicated/gitops-builder:buildkite
+      options: --user root
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    # - name: test
+    #   run: |
+    #     set -x
+    #     pwd
+    #     echo "+++++ls /__w/kots/kots"
+    #     ls -l /__w/kots/kots
+    #     echo "+++++ls /__w/kots"
+    #     ls -l /__w/kots
+    #     echo "+++++ls /__w"
+    #     ls -l /__w
+    #     echo "+++++touch test.txt"
+    #     touch /tmp/test.txt
+    #     ls -l /tmp/test.txt
+
+
+    - name: Download fixtures artifact
+      uses: actions/download-artifact@v2
+      with:
+        name: fixtures
+        path: ./kotsadm/migrations/fixtures/schema/fixtures.sql
+
+    - name: test
+      run: |
+        set -x
+        ls -l ./kotsadm/migrations/fixtures/schema/fixtures.sql
+
+    - name: Build fixtures
+      run: make -C kotsadm/migrations/fixtures deps build run
