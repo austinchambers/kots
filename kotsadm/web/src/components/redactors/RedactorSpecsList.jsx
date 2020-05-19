@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import { compose, withApollo } from "react-apollo";
 import { withRouter, Link } from "react-router-dom"
 import Helmet from "react-helmet";
-import moment from "moment";
+import dayjs from "dayjs";
 import Select from "react-select";
 
 import RedactorSpecRow from "./RedactorSpecRow";
@@ -53,9 +53,9 @@ class RedactorSpecsList extends Component {
 
   sortRedactorSpecs = value => {
     if (value === "createdAt") {
-      this.setState({ sortedRedactorSpecs: redactorSpecs.sort((a, b) => moment(b.createdAt) - moment(a.createdAt)) });
+      this.setState({ sortedRedactorSpecs: redactorSpecs.sort((a, b) => dayjs(b.createdAt) - dayjs(a.createdAt)) });
     } else {
-      this.setState({ sortedRedactorSpecs: redactorSpecs.sort((a, b) => moment(b.updatedOn) - moment(a.updatedOn)) });
+      this.setState({ sortedRedactorSpecs: redactorSpecs.sort((a, b) => dayjs(b.updatedOn) - dayjs(a.updatedOn)) });
     }
   }
 
