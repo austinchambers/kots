@@ -30,3 +30,5 @@ type HelmChartExpansion interface{}
 type InstallationExpansion interface{}
 
 type LicenseExpansion interface{}
+
+type PrivateLicenseExpansion interface{}

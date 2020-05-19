@@ -115,7 +115,7 @@ func Pull(upstreamURI string, pullOptions PullOptions) (string, error) {
 	}
 
 	if pullOptions.LicenseFile != "" {
-		license, err := ParseLicenseFromFile(pullOptions.LicenseFile)
+		license, privateLicense, err := ParseLicenseFromFile(pullOptions.LicenseFile)
 		if err != nil {
 			if errors.Cause(err) == ErrSignatureInvalid {
 				return "", ErrSignatureInvalid
@@ -127,6 +127,7 @@ func Pull(upstreamURI string, pullOptions PullOptions) (string, error) {
 		}
 
 		fetchOptions.License = license
+		fetchOptions.PrivateLicense = privateLicense
 	} else {
 		fetchOptions.License = localLicense
 	}
@@ -464,29 +465,34 @@ func Pull(upstreamURI string, pullOptions PullOptions) (string, error) {
 	return filepath.Join(pullOptions.RootDir, u.Name), nil
 }
 
-func ParseLicenseFromFile(filename string) (*kotsv1beta1.License, error) {
+func ParseLicenseFromFile(filename string) (*kotsv1beta1.License, *kotsv1beta1.PrivateLicense, error) {
 	contents, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to read license file")
+		return nil, nil, errors.Wrap(err, "failed to read license file")
 	}
 
 	decode := scheme.Codecs.UniversalDeserializer().Decode
 	decoded, gvk, err := decode(contents, nil, nil)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to decode license file")
+		return nil, nil, errors.Wrap(err, "unable to decode license file")
 	}
 
-	if gvk.Group != "kots.io" || gvk.Version != "v1beta1" || gvk.Kind != "License" {
-		return nil, errors.New("not an application license")
+	if gvk.Group == "kots.io" && gvk.Version == "v1beta1" && gvk.Kind == "License" {
+		license := decoded.(*kotsv1beta1.License)
+		verifiedLicense, err := VerifySignature(license)
+		if err != nil {
+			return nil, nil, errors.Wrap(err, "failed to verify signature")
+		}
+
+		return verifiedLicense, nil, nil
 	}
 
-	license := decoded.(*kotsv1beta1.License)
-	verifiedLicense, err := VerifySignature(license)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to verify signature")
+	if gvk.Group == "kots.io" && gvk.Version == "v1beta1" && gvk.Kind == "PrivateLicense" {
+		privateLicense := decoded.(*kotsv1beta1.PrivateLicense)
+		return nil, privateLicense, nil
 	}
 
-	return verifiedLicense, nil
+	return nil, nil, errors.New("not an application license")
 }
 
 func ParseConfigValuesFromFile(filename string) (*kotsv1beta1.ConfigValues, error) {

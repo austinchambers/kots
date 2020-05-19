@@ -79,6 +79,11 @@ func createVersion(appID string, filesInDir string, source string, currentSequen
 	if err != nil {
 		return int64(0), errors.Wrap(err, "failed to marshal license spec")
 	}
+	privateLicenseSpec, err := kotsKinds.Marshal("kots.io", "v1beta1", "PrivateLicense")
+	if err != nil {
+		return int64(0), errors.Wrap(err, "failed to marshal private license spec")
+	}
+
 	configSpec, err := kotsKinds.Marshal("kots.io", "v1beta1", "Config")
 	if err != nil {
 		return int64(0), errors.Wrap(err, "failed to marshal config spec")
@@ -101,6 +106,13 @@ func createVersion(appID string, filesInDir string, source string, currentSequen
 		return 0, errors.Wrap(err, "failed to get new app sequence")
 	}
 	newSequence := int(n)
+
+	selectedLicenseSpec := ""
+	if licenseSpec != "" {
+		selectedLicenseSpec = licenseSpec
+	} else if privateLicenseSpec != "" {
+		selectedLicenseSpec = licenseSpec
+	}
 
 	query := `insert into app_version (app_id, sequence, created_at, version_label, release_notes, update_cursor, channel_name, encryption_key,
 supportbundle_spec, analyzer_spec, preflight_spec, app_spec, kots_app_spec, kots_license, config_spec, config_values, backup_spec)
@@ -132,7 +144,7 @@ backup_spec = EXCLUDED.backup_spec`
 		preflightSpec,
 		appSpec,
 		kotsAppSpec,
-		licenseSpec,
+		selectedLicenseSpec,
 		configSpec,
 		configValuesSpec,
 		backupSpec)
@@ -200,6 +212,12 @@ backup_spec = EXCLUDED.backup_spec`
 				}
 
 				license = string(licenseSpec)
+			} else if kotsKinds.PrivateLicense != nil {
+				privateLicenseSpec, err := kotsKinds.Marshal("kots.io", "v1beta1", "PrivateLicense")
+				if err != nil {
+					return int64(0), errors.Wrap(err, "failed to render private license")
+				}
+				license = string(privateLicenseSpec)
 			}
 			needsConfig, err := config.NeedsConfiguration(string(configSpec), configValues, license)
 			if err != nil {

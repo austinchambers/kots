@@ -83,13 +83,15 @@ func InstallCmd() *cobra.Command {
 			}
 
 			var license *kotsv1beta1.License
+			var privateLicense *kotsv1beta1.PrivateLicense
 			if v.GetString("license-file") != "" {
-				parsedLicense, err := pull.ParseLicenseFromFile(ExpandDir(v.GetString("license-file")))
+				parsedLicense, parsedPrivateLicense, err := pull.ParseLicenseFromFile(ExpandDir(v.GetString("license-file")))
 				if err != nil {
 					return errors.Wrap(err, "failed to parse license file")
 				}
 
 				license = parsedLicense
+				privateLicense = parsedPrivateLicense
 			}
 
 			var configValues *kotsv1beta1.ConfigValues
@@ -111,6 +113,7 @@ func InstallCmd() *cobra.Command {
 				NodePort:              v.GetInt32("node-port"),
 				ApplicationMetadata:   applicationMetadata,
 				License:               license,
+				PrivateLicense:        privateLicense,
 				ConfigValues:          configValues,
 			}
 
