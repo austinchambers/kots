@@ -115,7 +115,7 @@ func Pull(upstreamURI string, pullOptions PullOptions) (string, error) {
 	}
 
 	if pullOptions.LicenseFile != "" {
-		license, privateLicense, err := ParseLicenseFromFile(pullOptions.LicenseFile)
+		license, unsignedLicense, err := ParseLicenseFromFile(pullOptions.LicenseFile)
 		if err != nil {
 			if errors.Cause(err) == ErrSignatureInvalid {
 				return "", ErrSignatureInvalid
@@ -127,7 +127,7 @@ func Pull(upstreamURI string, pullOptions PullOptions) (string, error) {
 		}
 
 		fetchOptions.License = license
-		fetchOptions.PrivateLicense = privateLicense
+		fetchOptions.UnsignedLicense = unsignedLicense
 	} else {
 		fetchOptions.License = localLicense
 	}
@@ -465,7 +465,7 @@ func Pull(upstreamURI string, pullOptions PullOptions) (string, error) {
 	return filepath.Join(pullOptions.RootDir, u.Name), nil
 }
 
-func ParseLicenseFromFile(filename string) (*kotsv1beta1.License, *kotsv1beta1.PrivateLicense, error) {
+func ParseLicenseFromFile(filename string) (*kotsv1beta1.License, *kotsv1beta1.UnsignedLicense, error) {
 	contents, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to read license file")
@@ -487,9 +487,9 @@ func ParseLicenseFromFile(filename string) (*kotsv1beta1.License, *kotsv1beta1.P
 		return verifiedLicense, nil, nil
 	}
 
-	if gvk.Group == "kots.io" && gvk.Version == "v1beta1" && gvk.Kind == "PrivateLicense" {
-		privateLicense := decoded.(*kotsv1beta1.PrivateLicense)
-		return nil, privateLicense, nil
+	if gvk.Group == "kots.io" && gvk.Version == "v1beta1" && gvk.Kind == "UnsignedLicense" {
+		unsignedLicense := decoded.(*kotsv1beta1.UnsignedLicense)
+		return nil, unsignedLicense, nil
 	}
 
 	return nil, nil, errors.New("not an application license")

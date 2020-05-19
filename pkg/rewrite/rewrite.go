@@ -31,7 +31,7 @@ type RewriteOptions struct {
 	ExcludeKotsKinds  bool
 	Installation      *kotsv1beta1.Installation
 	License           *kotsv1beta1.License
-	PrivateLicense    *kotsv1beta1.PrivateLicense
+	UnsignedLicense   *kotsv1beta1.UnsignedLicense
 	ConfigValues      *kotsv1beta1.ConfigValues
 	ReportWriter      io.Writer
 	CopyImages        bool
@@ -65,7 +65,7 @@ func Rewrite(rewriteOptions RewriteOptions) error {
 		CurrentVersionLabel: rewriteOptions.Installation.Spec.VersionLabel,
 		EncryptionKey:       rewriteOptions.Installation.Spec.EncryptionKey,
 		License:             rewriteOptions.License,
-		PrivateLicense:      rewriteOptions.PrivateLicense,
+		UnsignedLicense:     rewriteOptions.UnsignedLicense,
 	}
 
 	log.ActionWithSpinner("Pulling upstream")
@@ -210,8 +210,8 @@ func Rewrite(rewriteOptions RewriteOptions) error {
 		appSlug := ""
 		if fetchOptions.License != nil {
 			appSlug = fetchOptions.License.Spec.AppSlug
-		} else if fetchOptions.PrivateLicense != nil {
-			appSlug = fetchOptions.PrivateLicense.Spec.Slug
+		} else if fetchOptions.UnsignedLicense != nil {
+			appSlug = fetchOptions.UnsignedLicense.Spec.Slug
 		}
 
 		findPrivateImagesOptions := base.FindPrivateImagesOptions{

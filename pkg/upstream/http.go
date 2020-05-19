@@ -37,7 +37,7 @@ type PrivateRelease struct {
 	CreatedAt    time.Time `json:"createdAt"`
 }
 
-func getUpdatesHttp(u *url.URL, localPath string, currentCursor ReplicatedCursor, versionLabel string, privateLicense *kotsv1beta1.PrivateLicense) ([]Update, error) {
+func getUpdatesHttp(u *url.URL, localPath string, currentCursor ReplicatedCursor, versionLabel string, unsignedLicense *kotsv1beta1.UnsignedLicense) ([]Update, error) {
 	if localPath != "" {
 		parsedLocalRelease, err := readReplicatedAppFromLocalPath(localPath, currentCursor, versionLabel)
 		if err != nil {
@@ -48,8 +48,8 @@ func getUpdatesHttp(u *url.URL, localPath string, currentCursor ReplicatedCursor
 	}
 
 	// We currently require a private license
-	if privateLicense == nil {
-		return nil, errors.New("PrivateLicense is required")
+	if unsignedLicense == nil {
+		return nil, errors.New("UnsignedLicense is required")
 	}
 
 	privateUpstream, err := parseHTTPURL(u.RequestURI())
@@ -57,7 +57,7 @@ func getUpdatesHttp(u *url.URL, localPath string, currentCursor ReplicatedCursor
 		return nil, errors.Wrap(err, "failed to parse http upstrteam")
 	}
 
-	pendingReleases, err := listPendingPrivateAppReleases(privateUpstream, privateLicense, currentCursor)
+	pendingReleases, err := listPendingPrivateAppReleases(privateUpstream, unsignedLicense, currentCursor)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to list pending private app releases")
 	}
@@ -73,8 +73,8 @@ func getUpdatesHttp(u *url.URL, localPath string, currentCursor ReplicatedCursor
 	return updates, nil
 }
 
-func listPendingPrivateAppReleases(privateUpstream *PrivateUpstream, privateLicense *kotsv1beta1.PrivateLicense, cursor ReplicatedCursor) ([]PrivateRelease, error) {
-	u, err := url.Parse(privateLicense.Spec.Endpoint)
+func listPendingPrivateAppReleases(privateUpstream *PrivateUpstream, unsignedLicense *kotsv1beta1.UnsignedLicense, cursor ReplicatedCursor) ([]PrivateRelease, error) {
+	u, err := url.Parse(unsignedLicense.Spec.Endpoint)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to parse endpoint from private license")
 	}
@@ -88,7 +88,7 @@ func listPendingPrivateAppReleases(privateUpstream *PrivateUpstream, privateLice
 
 	urlValues := url.Values{}
 	urlValues.Set("sequence", sequence)
-	url := fmt.Sprintf("%s://%s/release/%s/pending?%s", u.Scheme, hostname, privateLicense.Spec.Slug, urlValues.Encode())
+	url := fmt.Sprintf("%s://%s/release/%s/pending?%s", u.Scheme, hostname, unsignedLicense.Spec.Slug, urlValues.Encode())
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -125,7 +125,7 @@ func listPendingPrivateAppReleases(privateUpstream *PrivateUpstream, privateLice
 
 func downloadHttp(httpURI string, fetchOptions *FetchOptions, existingConfigValues *kotsv1beta1.ConfigValues, updateCursor ReplicatedCursor, cipher *crypto.AESCipher) (*types.Upstream, error) {
 	// a license file is required
-	if fetchOptions.PrivateLicense == nil {
+	if fetchOptions.UnsignedLicense == nil {
 		return nil, errors.New("A private license file is required")
 	}
 
@@ -134,7 +134,7 @@ func downloadHttp(httpURI string, fetchOptions *FetchOptions, existingConfigValu
 		return nil, errors.Wrap(err, "failed to parsed http upstream")
 	}
 
-	release, err := downloadHTTPApp(privateUpstream, fetchOptions.PrivateLicense, updateCursor)
+	release, err := downloadHTTPApp(privateUpstream, fetchOptions.UnsignedLicense, updateCursor)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to download http app")
 	}
@@ -149,7 +149,7 @@ func downloadHttp(httpURI string, fetchOptions *FetchOptions, existingConfigValu
 	if config != nil || existingConfigValues != nil {
 		// If config existed and was removed from the app,
 		// values will be carried over to the new version anyway.
-		configValues, err := createConfigValues(application.Name, config, existingConfigValues, cipher, nil, fetchOptions.PrivateLicense)
+		configValues, err := createConfigValues(application.Name, config, existingConfigValues, cipher, nil, fetchOptions.UnsignedLicense)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create empty config values")
 		}
@@ -157,7 +157,7 @@ func downloadHttp(httpURI string, fetchOptions *FetchOptions, existingConfigValu
 		release.Manifests["userdata/config.yaml"] = mustMarshalConfigValues(configValues)
 	}
 
-	release.Manifests["userdata/license.yaml"] = MustMarshalPrivateLicense(fetchOptions.PrivateLicense)
+	release.Manifests["userdata/license.yaml"] = MustMarshalUnsignedLicense(fetchOptions.UnsignedLicense)
 
 	files, err := releaseToFiles(release)
 	if err != nil {
@@ -177,11 +177,11 @@ func downloadHttp(httpURI string, fetchOptions *FetchOptions, existingConfigValu
 
 }
 
-func MustMarshalPrivateLicense(privateLicense *kotsv1beta1.PrivateLicense) []byte {
+func MustMarshalUnsignedLicense(unsignedLicense *kotsv1beta1.UnsignedLicense) []byte {
 	s := serializer.NewYAMLSerializer(serializer.DefaultMetaFactory, scheme.Scheme, scheme.Scheme)
 
 	var b bytes.Buffer
-	if err := s.Encode(privateLicense, &b); err != nil {
+	if err := s.Encode(unsignedLicense, &b); err != nil {
 		panic(err)
 	}
 
@@ -199,8 +199,8 @@ func parseHTTPURL(url string) (*PrivateUpstream, error) {
 	return &privateUpstream, nil
 }
 
-func downloadHTTPApp(privateUpstream *PrivateUpstream, privateLicense *kotsv1beta1.PrivateLicense, cursor ReplicatedCursor) (*Release, error) {
-	getReq, err := privateUpstream.getRequest("GET", privateLicense, cursor)
+func downloadHTTPApp(privateUpstream *PrivateUpstream, unsignedLicense *kotsv1beta1.UnsignedLicense, cursor ReplicatedCursor) (*Release, error) {
+	getReq, err := privateUpstream.getRequest("GET", unsignedLicense, cursor)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create http request")
 	}
@@ -268,8 +268,8 @@ func downloadHTTPApp(privateUpstream *PrivateUpstream, privateLicense *kotsv1bet
 
 }
 
-func (p *PrivateUpstream) getRequest(method string, privateLicense *kotsv1beta1.PrivateLicense, cursor ReplicatedCursor) (*http.Request, error) {
-	u, err := url.Parse(privateLicense.Spec.Endpoint)
+func (p *PrivateUpstream) getRequest(method string, unsignedLicense *kotsv1beta1.UnsignedLicense, cursor ReplicatedCursor) (*http.Request, error) {
+	u, err := url.Parse(unsignedLicense.Spec.Endpoint)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to parse endpoint from license")
 	}
@@ -279,7 +279,7 @@ func (p *PrivateUpstream) getRequest(method string, privateLicense *kotsv1beta1.
 		hostname = fmt.Sprintf("%s:%s", u.Hostname(), u.Port())
 	}
 
-	urlPath := path.Join(hostname, "release", privateLicense.Spec.Slug)
+	urlPath := path.Join(hostname, "release", unsignedLicense.Spec.Slug)
 
 	urlValues := url.Values{}
 	urlValues.Set("channelSequence", cursor.Cursor)
@@ -291,7 +291,7 @@ func (p *PrivateUpstream) getRequest(method string, privateLicense *kotsv1beta1.
 	}
 
 	req.Header.Add("User-Agent", fmt.Sprintf("KOTS/%s", version.Version()))
-	req.Header.Set("Authorization", fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", privateLicense.Name, privateLicense.Name)))))
+	req.Header.Set("Authorization", fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", unsignedLicense.Name, unsignedLicense.Name)))))
 
 	return req, nil
 }

@@ -173,7 +173,7 @@ func UploadNewLicense(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// validate the license
-	unverifiedLicense, privateLicense, err := kotsutil.LoadLicenseFromBytes([]byte(uploadLicenseRequest.LicenseData))
+	unverifiedLicense, unsignedLicense, err := kotsutil.LoadLicenseFromBytes([]byte(uploadLicenseRequest.LicenseData))
 	if err != nil {
 		logger.Error(err)
 		w.WriteHeader(400)
@@ -185,21 +185,21 @@ func UploadNewLicense(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if privateLicense != nil {
-		uploadPrivateLicense(w, uploadLicenseRequest, privateLicense)
+	if unsignedLicense != nil {
+		uploadUnsignedLicense(w, uploadLicenseRequest, unsignedLicense)
 		return
 	}
 
 }
 
-func uploadPrivateLicense(w http.ResponseWriter, uploadLicenseRequest UploadLicenseRequest, privateLicense *kotsv1beta1.PrivateLicense) {
+func uploadUnsignedLicense(w http.ResponseWriter, uploadLicenseRequest UploadLicenseRequest, unsignedLicense *kotsv1beta1.UnsignedLicense) {
 	uploadLicenseResponse := UploadLicenseResponse{
 		Success: false,
 	}
 
-	desiredAppName := strings.Replace(privateLicense.Spec.Slug, "-", " ", 0)
+	desiredAppName := strings.Replace(unsignedLicense.Spec.Slug, "-", " ", 0)
 
-	a, err := app.Create(desiredAppName, privateLicense.Spec.Endpoint, uploadLicenseRequest.LicenseData, false)
+	a, err := app.Create(desiredAppName, unsignedLicense.Spec.Endpoint, uploadLicenseRequest.LicenseData, false)
 	if err != nil {
 		logger.Error(err)
 		uploadLicenseResponse.Error = err.Error()
@@ -213,7 +213,7 @@ func uploadPrivateLicense(w http.ResponseWriter, uploadLicenseRequest UploadLice
 		Name:        a.Name,
 		LicenseData: uploadLicenseRequest.LicenseData,
 	}
-	kotsKinds, err := online.CreateAppFromOnline(&pendingApp, privateLicense.Spec.Endpoint)
+	kotsKinds, err := online.CreateAppFromOnline(&pendingApp, unsignedLicense.Spec.Endpoint)
 	if err != nil {
 		logger.Error(err)
 		uploadLicenseResponse.Error = err.Error()

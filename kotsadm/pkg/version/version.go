@@ -79,7 +79,7 @@ func createVersion(appID string, filesInDir string, source string, currentSequen
 	if err != nil {
 		return int64(0), errors.Wrap(err, "failed to marshal license spec")
 	}
-	privateLicenseSpec, err := kotsKinds.Marshal("kots.io", "v1beta1", "PrivateLicense")
+	unsignedLicenseSpec, err := kotsKinds.Marshal("kots.io", "v1beta1", "UnsignedLicense")
 	if err != nil {
 		return int64(0), errors.Wrap(err, "failed to marshal private license spec")
 	}
@@ -110,7 +110,7 @@ func createVersion(appID string, filesInDir string, source string, currentSequen
 	selectedLicenseSpec := ""
 	if licenseSpec != "" {
 		selectedLicenseSpec = licenseSpec
-	} else if privateLicenseSpec != "" {
+	} else if unsignedLicenseSpec != "" {
 		selectedLicenseSpec = licenseSpec
 	}
 
@@ -212,12 +212,12 @@ backup_spec = EXCLUDED.backup_spec`
 				}
 
 				license = string(licenseSpec)
-			} else if kotsKinds.PrivateLicense != nil {
-				privateLicenseSpec, err := kotsKinds.Marshal("kots.io", "v1beta1", "PrivateLicense")
+			} else if kotsKinds.UnsignedLicense != nil {
+				unsignedLicenseSpec, err := kotsKinds.Marshal("kots.io", "v1beta1", "UnsignedLicense")
 				if err != nil {
 					return int64(0), errors.Wrap(err, "failed to render private license")
 				}
-				license = string(privateLicenseSpec)
+				license = string(unsignedLicenseSpec)
 			}
 			needsConfig, err := config.NeedsConfiguration(string(configSpec), configValues, license)
 			if err != nil {

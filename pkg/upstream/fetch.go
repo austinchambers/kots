@@ -18,7 +18,7 @@ type FetchOptions struct {
 	HelmOptions         []string
 	LocalPath           string
 	License             *kotsv1beta1.License
-	PrivateLicense      *kotsv1beta1.PrivateLicense
+	UnsignedLicense     *kotsv1beta1.UnsignedLicense
 	ConfigValues        *kotsv1beta1.ConfigValues
 	Airgap              *kotsv1beta1.Airgap
 	EncryptionKey       string

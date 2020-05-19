@@ -24,6 +24,6 @@ type DeployOptions struct {
 	LimitRange             *corev1.LimitRange
 	IsOpenShift            bool
 	License                *kotsv1beta1.License
-	PrivateLicense         *kotsv1beta1.PrivateLicense
+	UnsignedLicense        *kotsv1beta1.UnsignedLicense
 	ConfigValues           *kotsv1beta1.ConfigValues
 }

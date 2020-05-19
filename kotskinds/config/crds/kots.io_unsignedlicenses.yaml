@@ -6,14 +6,14 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.2.8
   creationTimestamp: null
-  name: privatelicenses.kots.io
+  name: unsignedlicenses.kots.io
 spec:
   group: kots.io
   names:
     kind: UnsignedLicense
     listKind: UnsignedLicenseList
-    plural: privatelicenses
-    singular: privatelicense
+    plural: unsignedlicenses
+    singular: unsignedlicense
   scope: Namespaced
   subresources:
     status: {}

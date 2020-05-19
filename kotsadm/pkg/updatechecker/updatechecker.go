@@ -176,8 +176,8 @@ func CheckForUpdates(a *app.App) (int64, error) {
 	upstreamURI := ""
 	if kotsKinds.License != nil {
 		upstreamURI = fmt.Sprintf("replicated://%s", kotsKinds.License.Spec.AppSlug)
-	} else if kotsKinds.PrivateLicense != nil {
-		upstreamURI = kotsKinds.PrivateLicense.Spec.Endpoint
+	} else if kotsKinds.UnsignedLicense != nil {
+		upstreamURI = kotsKinds.UnsignedLicense.Spec.Endpoint
 	}
 
 	updates, err := kotspull.GetUpdates(upstreamURI, getUpdatesOptions)

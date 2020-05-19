@@ -49,7 +49,7 @@ func getUpdatesUpstream(upstreamURI string, fetchOptions *FetchOptions) ([]Updat
 			ChannelName: fetchOptions.CurrentChannel,
 			Cursor:      fetchOptions.CurrentCursor,
 		}
-		return getUpdatesHttp(u, fetchOptions.LocalPath, cursor, fetchOptions.CurrentVersionLabel, fetchOptions.PrivateLicense)
+		return getUpdatesHttp(u, fetchOptions.LocalPath, cursor, fetchOptions.CurrentVersionLabel, fetchOptions.UnsignedLicense)
 	}
 
 	return nil, errors.Errorf("unknown protocol scheme %q", u.Scheme)

@@ -34,12 +34,12 @@ func templateConfig(log *logger.Logger, configSpecData string, configValuesData 
 	}
 
 	var license *kotsv1beta1.License
-	var privateLicense *kotsv1beta1.PrivateLicense
+	var unsignedLicense *kotsv1beta1.UnsignedLicense
 
 	if gvk.Group == "kots.io" && gvk.Version == "v1beta1" && gvk.Kind == "License" {
 		license = obj.(*kotsv1beta1.License)
-	} else if gvk.Group == "kots.io" && gvk.Version == "v1beta1" && gvk.Kind == "PrivateLicense" {
-		privateLicense = obj.(*kotsv1beta1.PrivateLicense)
+	} else if gvk.Group == "kots.io" && gvk.Version == "v1beta1" && gvk.Kind == "UnsignedLicense" {
+		unsignedLicense = obj.(*kotsv1beta1.UnsignedLicense)
 	} else {
 		return "", errors.Errorf("expected License, but found %s/%s/%s", gvk.Group, gvk.Version, gvk.Kind)
 	}
@@ -60,7 +60,7 @@ func templateConfig(log *logger.Logger, configSpecData string, configValuesData 
 		templateContext = map[string]template.ItemValue{}
 	}
 
-	builder, configVals, err := template.NewBuilder(config.Spec.Groups, templateContext, localRegistry, nil, license, privateLicense)
+	builder, configVals, err := template.NewBuilder(config.Spec.Groups, templateContext, localRegistry, nil, license, unsignedLicense)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to create config context")
 	}

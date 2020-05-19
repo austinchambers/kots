@@ -41,9 +41,9 @@ type KotsKinds struct {
 	Config       *kotsv1beta1.Config
 	ConfigValues *kotsv1beta1.ConfigValues
 
-	Installation   kotsv1beta1.Installation
-	License        *kotsv1beta1.License
-	PrivateLicense *kotsv1beta1.PrivateLicense
+	Installation    kotsv1beta1.Installation
+	License         *kotsv1beta1.License
+	UnsignedLicense *kotsv1beta1.UnsignedLicense
 
 	Backup *velerov1.Backup
 }
@@ -177,12 +177,12 @@ func (o KotsKinds) Marshal(g string, v string, k string) (string, error) {
 					return "", errors.Wrap(err, "failed to encode license")
 				}
 				return string(b.Bytes()), nil
-			case "PrivateLicense":
-				if o.PrivateLicense == nil {
+			case "UnsignedLicense":
+				if o.UnsignedLicense == nil {
 					return "", nil
 				}
 				var b bytes.Buffer
-				if err := s.Encode(o.PrivateLicense, &b); err != nil {
+				if err := s.Encode(o.UnsignedLicense, &b); err != nil {
 					return "", errors.Wrap(err, "failed to encode private license")
 				}
 				return string(b.Bytes()), nil
@@ -322,8 +322,8 @@ func LoadKotsKindsFromPath(fromDir string) (*KotsKinds, error) {
 				kotsKinds.KotsApplication = *decoded.(*kotsv1beta1.Application)
 			case "kots.io/v1beta1, Kind=License":
 				kotsKinds.License = decoded.(*kotsv1beta1.License)
-			case "kots.io/v1beta1, Kind=PrivateLicense":
-				kotsKinds.PrivateLicense = decoded.(*kotsv1beta1.PrivateLicense)
+			case "kots.io/v1beta1, Kind=UnsignedLicense":
+				kotsKinds.UnsignedLicense = decoded.(*kotsv1beta1.UnsignedLicense)
 			case "kots.io/v1beta1, Kind=Installation":
 				kotsKinds.Installation = *decoded.(*kotsv1beta1.Installation)
 			case "troubleshoot.replicated.com/v1beta1, Kind=Collector":
@@ -366,7 +366,7 @@ func LoadInstallationFromPath(installationFilePath string) (*kotsv1beta1.Install
 	return obj.(*kotsv1beta1.Installation), nil
 }
 
-func LoadLicenseFromPath(licenseFilePath string) (*kotsv1beta1.License, *kotsv1beta1.PrivateLicense, error) {
+func LoadLicenseFromPath(licenseFilePath string) (*kotsv1beta1.License, *kotsv1beta1.UnsignedLicense, error) {
 	licenseData, err := ioutil.ReadFile(licenseFilePath)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to read license file")
@@ -375,7 +375,7 @@ func LoadLicenseFromPath(licenseFilePath string) (*kotsv1beta1.License, *kotsv1b
 	return LoadLicenseFromBytes(licenseData)
 }
 
-func LoadLicenseFromBytes(data []byte) (*kotsv1beta1.License, *kotsv1beta1.PrivateLicense, error) {
+func LoadLicenseFromBytes(data []byte) (*kotsv1beta1.License, *kotsv1beta1.UnsignedLicense, error) {
 	decode := scheme.Codecs.UniversalDeserializer().Decode
 	obj, gvk, err := decode([]byte(data), nil, nil)
 	if err != nil {
@@ -384,8 +384,8 @@ func LoadLicenseFromBytes(data []byte) (*kotsv1beta1.License, *kotsv1beta1.Priva
 
 	if gvk.Group == "kots.io" && gvk.Version == "v1beta1" && gvk.Kind == "License" {
 		return obj.(*kotsv1beta1.License), nil, nil
-	} else if gvk.Group == "kots.io" && gvk.Version == "v1beta1" && gvk.Kind == "PrivateLicense" {
-		return nil, obj.(*kotsv1beta1.PrivateLicense), nil
+	} else if gvk.Group == "kots.io" && gvk.Version == "v1beta1" && gvk.Kind == "UnsignedLicense" {
+		return nil, obj.(*kotsv1beta1.UnsignedLicense), nil
 	}
 
 	return nil, nil, errors.Errorf("unknown gvk: %s", gvk.String())

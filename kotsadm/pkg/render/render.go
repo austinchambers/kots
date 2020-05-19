@@ -90,7 +90,7 @@ func RenderDir(archiveDir string, appID string, appSequence int64, registrySetti
 		return errors.Wrap(err, "failed to load installation from path")
 	}
 
-	license, privateLicense, err := kotsutil.LoadLicenseFromPath(filepath.Join(archiveDir, "upstream", "userdata", "license.yaml"))
+	license, unsignedLicense, err := kotsutil.LoadLicenseFromPath(filepath.Join(archiveDir, "upstream", "userdata", "license.yaml"))
 	if err != nil {
 		return errors.Wrap(err, "failed to load license from path")
 	}
@@ -124,8 +124,8 @@ func RenderDir(archiveDir string, appID string, appSequence int64, registrySetti
 	upstreamURI := ""
 	if license != nil {
 		upstreamURI = fmt.Sprintf("replicated://%s", license.Spec.AppSlug)
-	} else if privateLicense != nil {
-		upstreamURI = privateLicense.Spec.Endpoint
+	} else if unsignedLicense != nil {
+		upstreamURI = unsignedLicense.Spec.Endpoint
 	}
 	rewriteOptions := rewrite.RewriteOptions{
 		RootDir:          archiveDir,
@@ -137,7 +137,7 @@ func RenderDir(archiveDir string, appID string, appSequence int64, registrySetti
 		CreateAppDir:     false,
 		ExcludeKotsKinds: true,
 		License:          license,
-		PrivateLicense:   privateLicense,
+		UnsignedLicense:  unsignedLicense,
 		ConfigValues:     configValues,
 		K8sNamespace:     appNamespace,
 		CopyImages:       false,
