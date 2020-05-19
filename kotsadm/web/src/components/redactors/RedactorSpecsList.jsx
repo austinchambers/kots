@@ -1,11 +1,12 @@
 import React, { Component } from "react";
 import { compose, withApollo } from "react-apollo";
-import { withRouter } from "react-router-dom"
+import { withRouter, Link } from "react-router-dom"
 import Helmet from "react-helmet";
 import moment from "moment";
 import Select from "react-select";
 
 import RedactorSpecRow from "./RedactorSpecRow";
+import DeleteRedactorSpec from "../modals/DeleteRedactorSpec";
 
 const redactorSpecs = [
   {
@@ -28,15 +29,17 @@ const redactorSpecs = [
 
 class RedactorSpecsList extends Component {
   state = {
-    sortedSpecs: [],
+    sortedRedactorSpecs: [],
     selectedOption: {
       value: "createdAt",
       label: "Sort by: Created At"
-    }
+    },
+    deleteRedactorSpecModal: false,
+    redactorToDelete: {}
 
   };
 
-  handleSortChange = (selectedOption) => {
+  handleSortChange = selectedOption => {
     this.setState({ selectedOption }, () => {
       this.sortRedactorSpecs(this.state.selectedOption.value);
     });
@@ -48,17 +51,29 @@ class RedactorSpecsList extends Component {
     }
   }
 
-  sortRedactorSpecs = (value) => {
+  sortRedactorSpecs = value => {
     if (value === "createdAt") {
-      this.setState({ sortedSpecs: redactorSpecs.sort((a, b) => moment(b.createdAt) - moment(a.createdAt)) });
+      this.setState({ sortedRedactorSpecs: redactorSpecs.sort((a, b) => moment(b.createdAt) - moment(a.createdAt)) });
     } else {
-      this.setState({ sortedSpecs: redactorSpecs.sort((a, b) => moment(b.updatedOn) - moment(a.updatedOn)) });
+      this.setState({ sortedRedactorSpecs: redactorSpecs.sort((a, b) => moment(b.updatedOn) - moment(a.updatedOn)) });
     }
+  }
+
+  toggleConfirmDeleteModal = redactor => {
+    if (this.state.deleteRedactorSpecModal) {
+      this.setState({ deleteRedactorSpecModal: false, redactorToDelete: "", deleteErr: false, deleteErrorMsg: "" });
+    } else {
+      this.setState({ deleteRedactorSpecModal: true, redactorToDelete: redactor, deleteErr: false, deleteErrorMsg: "" });
+    }
+  };
+
+  handleDeleteRedactor = redactor => {
+    console.log("deleting", redactor)
   }
 
 
   render() {
-    const { sortedSpecs, selectedOption } = this.state;
+    const { sortedRedactorSpecs, selectedOption, deleteRedactorSpecModal } = this.state;
 
     const selectOptions = [
       {
@@ -93,18 +108,29 @@ class RedactorSpecsList extends Component {
               </div>
             </div>
             <div className="flex justifyContent--flexEnd">
-              <button className="btn primary blue"> Create new redactor </button>
+              <Link to="/redactor/specs/new" className="btn primary blue"> Create new redactor </Link>
             </div>
           </div>
           <p className="u-fontSize--normal u-color--dustyGray u-fontWeight--medium u-lineHeight--normal u-marginTop--small u-marginBottom--30">Define custom rules for sensitive values you need to be redacted when gathering a support bundle. This might inlude things like Secrets or IP addresses. For help with creating custom redactor specs,
           <a href="" target="_blank" rel="noopener noreferrer" className="replicated-link"> check out our docs</a>.</p>
-          {sortedSpecs?.map((spec) => (
+          {sortedRedactorSpecs?.map((redactor) => (
             <RedactorSpecRow
-              key={`redactor-${spec.name}-${spec.uploadedOn}`}
-              spec={spec}
+              key={`redactor-${redactor.id}`}
+              redactor={redactor}
+              toggleConfirmDeleteModal={this.toggleConfirmDeleteModal}
             />
           ))}
         </div>
+        {deleteRedactorSpecModal &&
+          <DeleteRedactorSpec
+            deleteRedactorSpecModal={deleteRedactorSpecModal}
+            toggleConfirmDeleteModal={this.toggleConfirmDeleteModal}
+            handleDeleteRedactor={this.handleDeleteRedactor}
+            redactorToDelete={this.state.redactorToDelete}
+            deleteErr={this.state.deleteErr}
+            deleteErrorMsg={this.state.deleteErrorMsg}
+          />
+        }
       </div>
     );
   }

@@ -12,6 +12,7 @@ import GitOps from "././components/clusters/GitOps";
 import Snapshots from "./components/snapshots/Snapshots";
 import PreflightResultPage from "./components/PreflightResultPage";
 import RedactorSpecsList from "./components/redactors/RedactorSpecsList";
+import EditRedactorSpec from "./components/redactors/EditRedactorSpec";
 import AppConfig from "./components/apps/AppConfig";
 import AppDetailPage from "./components/apps/AppDetailPage";
 import ClusterNodes from "./components/apps/ClusterNodes";
@@ -302,7 +303,9 @@ class Root extends Component {
                     <ProtectedRoute path="/cluster/manage" render={(props) => <ClusterNodes {...props} appName={this.state.selectedAppName} />} />
                     <ProtectedRoute path="/gitops" render={(props) => <GitOps {...props} appName={this.state.selectedAppName} />} />
                     <ProtectedRoute path="/snapshots" render={(props) => <Snapshots {...props} appName={this.state.selectedAppName} />} />
-                    <ProtectedRoute path="/redactor/specs" render={(props) => <RedactorSpecsList {...props} appName={this.state.selectedAppName} />} />
+                    <ProtectedRoute exact path="/redactor/specs" render={(props) => <RedactorSpecsList {...props} appName={this.state.selectedAppName} />} />
+                    <ProtectedRoute exact path="/redactor/specs/new" render={(props) => <EditRedactorSpec {...props} appName={this.state.selectedAppName} />} />
+                    <ProtectedRoute exact path="/redactor/specs/:id" render={(props) => <EditRedactorSpec {...props} appName={this.state.selectedAppName} />} />
                     <ProtectedRoute
                       path={["/apps", "/app/:slug/:tab?"]}
                       render={
