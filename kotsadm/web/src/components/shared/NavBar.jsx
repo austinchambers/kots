@@ -56,6 +56,8 @@ export class NavBar extends PureComponent {
       selectedTab = "dashboard"
     } else if (pathname === "/snapshots") {
       selectedTab = "snapshots";
+    } else if (pathname === "/redactor/specs") {
+      selectedTab = "redactor_specs"
     }
     this.setState({ selectedTab });
   }
@@ -81,6 +83,10 @@ export class NavBar extends PureComponent {
 
   handleGoToSnapshots = () => {
     this.props.history.push("/snapshots");
+  }
+
+  handleGoToRedactorSpecs = () => {
+    this.props.history.push("/redactor/specs");
   }
 
   redirectToDashboard = () => {
@@ -164,6 +170,13 @@ export class NavBar extends PureComponent {
                         </span>
                       </div>
                     }
+                    <div className={classNames("NavItem u-position--relative flex", { "is-active": selectedTab === "redactor_specs" })}>
+                      <span className="HeaderLink flex flex1 u-cursor--pointer" onClick={this.handleGoToRedactorSpecs}>
+                        <span className="text u-fontSize--normal u-fontWeight--medium flex-column justifyContent--center">
+                          <span>Redactor Specs</span>
+                        </span>
+                      </span>
+                    </div>
                   </div>
                 )}
               </div>

@@ -11,6 +11,7 @@ import ConnectionTerminated from "./ConnectionTerminated";
 import GitOps from "././components/clusters/GitOps";
 import Snapshots from "./components/snapshots/Snapshots";
 import PreflightResultPage from "./components/PreflightResultPage";
+import RedactorSpecsList from "./components/redactors/RedactorSpecsList";
 import AppConfig from "./components/apps/AppConfig";
 import AppDetailPage from "./components/apps/AppDetailPage";
 import ClusterNodes from "./components/apps/ClusterNodes";
@@ -21,7 +22,7 @@ import { ShipClientGQL } from "./ShipClientGQL";
 import SecureAdminConsole from "./components/SecureAdminConsole";
 import RestoreCompleted from "./components/RestoreCompleted";
 
-import { ping, getKotsMetadata, listApps } from "@src/queries/AppsQueries";
+import { ping, listApps } from "@src/queries/AppsQueries";
 import Footer from "./components/shared/Footer";
 import NavBar from "./components/shared/NavBar";
 
@@ -301,6 +302,7 @@ class Root extends Component {
                     <ProtectedRoute path="/cluster/manage" render={(props) => <ClusterNodes {...props} appName={this.state.selectedAppName} />} />
                     <ProtectedRoute path="/gitops" render={(props) => <GitOps {...props} appName={this.state.selectedAppName} />} />
                     <ProtectedRoute path="/snapshots" render={(props) => <Snapshots {...props} appName={this.state.selectedAppName} />} />
+                    <ProtectedRoute path="/redactor/specs" render={(props) => <RedactorSpecsList {...props} appName={this.state.selectedAppName} />} />
                     <ProtectedRoute
                       path={["/apps", "/app/:slug/:tab?"]}
                       render={
